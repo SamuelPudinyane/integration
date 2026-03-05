@@ -1,4 +1,16 @@
 from __future__ import annotations
+"""Shared auth/data access layer for the integration portal.
+
+When onboarding additional apps into this integration, prefer reusing this module
+for shared identity and canonical role resolution so all apps enforce the same
+role vocabulary and user source of truth.
+
+Typical extension points:
+- Add shared user/profile lookup helpers consumed by multiple apps.
+- Keep canonical role mapping centralized (`canonical_role_name`) to avoid
+    app-specific role drift.
+- Add read-only reference data loaders needed by portal-wide pages.
+"""
 
 import os
 import re
@@ -45,6 +57,9 @@ DEPARTMENT_TABLE = "public.ref_organization_unit"
 
 
 def read_users() -> list[dict[str, str]]:
+    # This function is intentionally integration-facing:
+    # any new app plugged into the portal should rely on this user list (or helpers
+    # built on top of it) to ensure one consistent role model across apps.
     with engine.begin() as conn:
         rows = conn.execute(
             text(
@@ -100,6 +115,9 @@ def get_user_by_id(user_id: str | int | None) -> dict[str, str] | None:
 
 
 def authenticate_user(username: str, password: str) -> tuple[dict[str, Any] | None, str | None]:
+    # Note: password verification is currently minimal by design in this environment.
+    # If stronger auth is introduced for multiple apps, implement it here once so
+    # all integrated apps inherit the same authentication behavior.
     username_clean = (username or "").strip()
     password_clean = (password or "").strip()
     if not username_clean:

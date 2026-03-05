@@ -1,4 +1,15 @@
 from __future__ import annotations
+"""Master integration portal entrypoint.
+
+How to add another app into this integration:
+1) Define its script/path and port constants near the existing maintenance constants.
+2) Add app config values to `app.config` so route modules can build links/health checks.
+3) Extend `run_all_apps()` and `orchestrator_status()` to start/report that app.
+4) Add/extend auth route bridge handling in `auth_routes.py` (`/auth/open/<app_key>`).
+
+This file should remain the lightweight orchestrator for process startup, status,
+and root-level redirects.
+"""
 
 import os
 import socket
@@ -22,6 +33,11 @@ TEMPLATE_DIR = Path(__file__).resolve().parent / "templates"
 
 MASTER_PORT = int(os.getenv("MASTER_PORT", "5000"))
 MAINTENANCE_PORT = int(os.getenv("MAINTENANCE_PORT", "5001"))
+
+# For future apps, follow the same pattern used for maintenance:
+# - APP_NAME_SCRIPT path
+# - APP_NAME_PORT
+# - app.config["APP_NAME_BASE_URL"]
 
 app = Flask(__name__, static_folder=str(STATIC_DIR), template_folder=str(TEMPLATE_DIR))
 app.secret_key = os.getenv("AUTH_PORTAL_SECRET_KEY", "ekuruleni-auth-portal-dev-secret")
@@ -68,6 +84,8 @@ def report_incident_proxy() -> Any:
 
 @app.route("/orchestrator/run-all-apps", methods=["POST", "GET"])
 def run_all_apps() -> Any:
+    # Add additional `_start_process(...)` calls here (one per integrated app)
+    # and append each result into the response payload under `apps`.
     maintenance_result = _start_process(
         key="maintenance",
         command=[sys.executable, str(MAINTENANCE_SCRIPT)],
@@ -96,6 +114,8 @@ def run_all_apps() -> Any:
 
 @app.route("/orchestrator/status", methods=["GET"])
 def orchestrator_status() -> Any:
+    # Add per-app health checks here so the portal can report live status for all
+    # integrated applications from one endpoint.
     maintenance_up = _is_port_open(MAINTENANCE_PORT)
     return jsonify(
         {

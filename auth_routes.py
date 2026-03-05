@@ -1,4 +1,16 @@
 from __future__ import annotations
+"""Auth portal routes and integration bridge helpers.
+
+Developer extension guide (adding another integrated app):
+1) Add a card entry in `_system_cards()` with a unique `key` and `has_access` policy.
+2) Add app-specific URL/signature helpers similar to maintenance bridge helpers.
+3) Extend `open_internal_app()` to route the new `app_key` to the target app.
+4) If the app needs auto-start, add health-check + bootstrap logic like
+    `_is_maintenance_online()` and `_ensure_maintenance_online()`.
+
+Keep this file focused on portal-level routing/orchestration and keep app-specific
+business logic inside the target app's own codebase.
+"""
 
 import os
 import socket
@@ -96,6 +108,8 @@ def _require_login(view):
 
 
 def _system_cards() -> list[dict[str, str | bool]]:
+    # Add new integrated applications here so they appear on the master landing page.
+    # `key` must match what `open_internal_app()` expects in `/auth/open/<app_key>`.
     return [
         {
             "key": "maintenance",
@@ -226,6 +240,10 @@ def hierarchy_page_legacy_alias():
 @auth_bp.route("/auth/open/<app_key>")
 @_require_login
 def open_internal_app(app_key: str):
+    # Integration switchboard:
+    # - Keep per-app access checks and start/bridge logic here.
+    # - For each new app key, add a branch that validates access and redirects
+    #   to a signed SSO bridge URL (or direct URL if that app does not use bridge auth).
     normalized = (app_key or "").strip().lower()
     if normalized != "maintenance":
         flash("You currently only have access to the Maintenance application.", "warning")
