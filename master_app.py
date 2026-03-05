@@ -22,8 +22,10 @@ from flask import Flask, jsonify, redirect, request, url_for
 
 try:
     from auth_portal.auth_routes import auth_bp
+    from auth_portal.integration_policy import POLICY_VERSION, get_policy_apps
 except ModuleNotFoundError:
     from auth_routes import auth_bp
+    from integration_policy import POLICY_VERSION, get_policy_apps
 
 
 WORKSPACE_ROOT = Path(__file__).resolve().parent.parent
@@ -45,6 +47,8 @@ app.config["MAINTENANCE_APP_BASE_URL"] = f"http://127.0.0.1:{MAINTENANCE_PORT}"
 app.config["MAINTENANCE_APP_PORT"] = MAINTENANCE_PORT
 app.config["MAINTENANCE_SCRIPT_PATH"] = str(MAINTENANCE_SCRIPT)
 app.config["WORKSPACE_ROOT"] = str(WORKSPACE_ROOT)
+app.config["INTEGRATED_APPS"] = get_policy_apps(app.config)
+app.config["INTEGRATION_POLICY_VERSION"] = POLICY_VERSION
 app.register_blueprint(auth_bp)
 
 
@@ -84,52 +88,80 @@ def report_incident_proxy() -> Any:
 
 @app.route("/orchestrator/run-all-apps", methods=["POST", "GET"])
 def run_all_apps() -> Any:
-    # Add additional `_start_process(...)` calls here (one per integrated app)
-    # and append each result into the response payload under `apps`.
-    maintenance_result = _start_process(
-        key="maintenance",
-        command=[sys.executable, str(MAINTENANCE_SCRIPT)],
-        port=MAINTENANCE_PORT,
-    )
+    integrated_apps = get_policy_apps(app.config)
+    app.config["INTEGRATED_APPS"] = integrated_apps
+
+    started_apps: list[dict[str, Any]] = []
+    for integrated_app in integrated_apps:
+        if not bool(integrated_app.get("enabled")) or not bool(integrated_app.get("auto_start")):
+            continue
+
+        key = str(integrated_app.get("key") or "").strip()
+        script_path = str(integrated_app.get("script_path") or "").strip()
+        port = integrated_app.get("port")
+        if not key or not script_path or not isinstance(port, int):
+            continue
+
+        start_result = _start_process(
+            key=key,
+            command=[sys.executable, script_path],
+            port=port,
+        )
+        started_apps.append(
+            {
+                **start_result,
+                "name": str(integrated_app.get("name") or key),
+                "url": str(integrated_app.get("base_url") or f"http://127.0.0.1:{port}"),
+            }
+        )
 
     return jsonify(
         {
             "ok": True,
+            "policy_version": app.config.get("INTEGRATION_POLICY_VERSION", POLICY_VERSION),
             "master": {
                 "key": "master-auth-portal",
                 "status": "running",
                 "port": MASTER_PORT,
                 "url": f"http://127.0.0.1:{MASTER_PORT}",
             },
-            "apps": [
-                {
-                    **maintenance_result,
-                    "url": f"http://127.0.0.1:{MAINTENANCE_PORT}",
-                }
-            ],
-            "message": "Apps orchestration executed. Maintenance app is ensured on its dedicated port.",
+            "apps": started_apps,
+            "message": "Apps orchestration executed using policy-controlled startup rules.",
         }
     )
 
 
 @app.route("/orchestrator/status", methods=["GET"])
 def orchestrator_status() -> Any:
-    # Add per-app health checks here so the portal can report live status for all
-    # integrated applications from one endpoint.
-    maintenance_up = _is_port_open(MAINTENANCE_PORT)
+    integrated_apps = get_policy_apps(app.config)
+    app.config["INTEGRATED_APPS"] = integrated_apps
+
+    app_status_rows: list[dict[str, Any]] = []
+    for integrated_app in integrated_apps:
+        port = integrated_app.get("port")
+        running = _is_port_open(port) if isinstance(port, int) else False
+        app_status_rows.append(
+            {
+                "key": integrated_app.get("key"),
+                "name": integrated_app.get("name"),
+                "enabled": bool(integrated_app.get("enabled")),
+                "rollout_wave": integrated_app.get("rollout_wave"),
+                "running": running,
+                "port": port,
+                "url": integrated_app.get("base_url") or (f"http://127.0.0.1:{port}" if isinstance(port, int) else ""),
+            }
+        )
+
     return jsonify(
         {
             "ok": True,
+            "policy_version": app.config.get("INTEGRATION_POLICY_VERSION", POLICY_VERSION),
             "master": {
                 "running": True,
                 "port": MASTER_PORT,
                 "url": f"http://127.0.0.1:{MASTER_PORT}",
             },
-            "maintenance": {
-                "running": maintenance_up,
-                "port": MAINTENANCE_PORT,
-                "url": f"http://127.0.0.1:{MAINTENANCE_PORT}",
-            },
+            "apps": app_status_rows,
         }
     )
 

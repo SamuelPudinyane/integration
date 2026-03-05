@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Integration Policy</title>
+  <style>
+    :root{
+      --bg:#f4f6fa;
+      --panel:#ffffff;
+      --ink:#1f2530;
+      --muted:#667085;
+      --line:#d0d7e3;
+      --blue:#0f2f66;
+      --green:#1f8f48;
+      --yellow:#b27d00;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial;background:var(--bg);color:var(--ink)}
+    .page{max-width:1100px;margin:0 auto;padding:20px}
+    .top{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:14px}
+    .title{margin:0;font-size:24px;font-weight:900}
+    .sub{margin:4px 0 0;color:var(--muted);font-size:13px}
+    .btn{display:inline-flex;align-items:center;justify-content:center;text-decoration:none;border:1px solid var(--line);background:#fff;color:var(--ink);padding:8px 12px;border-radius:10px;font-weight:700}
+    .panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:14px}
+    .meta{display:flex;gap:12px;flex-wrap:wrap}
+    .tag{display:inline-flex;align-items:center;padding:6px 10px;border-radius:999px;font-size:12px;font-weight:800;border:1px solid var(--line);background:#fff}
+    .table-wrap{overflow:auto}
+    table{width:100%;border-collapse:collapse;font-size:13px;background:#fff}
+    th,td{padding:10px;border-bottom:1px solid #eef1f5;text-align:left;white-space:nowrap}
+    th{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.02em}
+    .state-live{color:var(--green);font-weight:800}
+    .state-planned{color:var(--yellow);font-weight:800}
+    .links a{color:var(--blue);text-decoration:none;font-weight:700}
+    .links a:hover{text-decoration:underline}
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="top">
+      <div>
+        <h1 class="title">Integration Policy</h1>
+        <p class="sub">Review policy version, app rollout states, and linked governance documents.</p>
+      </div>
+      <a class="btn" href="{{ url_for('auth.master_landing') }}">Back to Master</a>
+    </div>
+
+    <div class="panel">
+      <div class="meta">
+        <span class="tag">Policy Version: {{ policy_version }}</span>
+        <span class="tag">Logged in as: {{ current_user.username if current_user else 'Unknown' }}</span>
+      </div>
+    </div>
+
+    <div class="panel links">
+      <div><a href="/orchestrator/status" target="_blank" rel="noopener">Open Runtime Policy Status JSON</a></div>
+      <div><strong>Docs:</strong> INTEGRATION_POLICY.md and ROLLOUT_PLAN.md are in the auth_portal folder.</div>
+    </div>
+
+    <div class="panel table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Key</th>
+            <th>Name</th>
+            <th>Status</th>
+            <th>Enabled</th>
+            <th>Rollout Wave</th>
+            <th>Auto Start</th>
+            <th>Bridge</th>
+            <th>Access Roles</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for app in policy_apps %}
+            <tr>
+              <td>{{ app.key }}</td>
+              <td>{{ app.name }}</td>
+              <td class="{{ 'state-live' if app.status == 'Live' else 'state-planned' }}">{{ app.status }}</td>
+              <td>{{ 'Yes' if app.enabled else 'No' }}</td>
+              <td>{{ app.rollout_wave }}</td>
+              <td>{{ 'Yes' if app.auto_start else 'No' }}</td>
+              <td>{{ 'Yes' if app.requires_bridge else 'No' }}</td>
+              <td>{{ (app.access_roles or []) | join(', ') }}</td>
+            </tr>
+          {% else %}
+            <tr>
+              <td colspan="8">No policy apps found.</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</body>
+</html>

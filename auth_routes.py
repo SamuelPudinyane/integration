@@ -31,9 +31,11 @@ try:
         read_l1_l3_process_hierarchy,
         read_process_steps,
     )
+    from auth_portal.integration_policy import POLICY_VERSION, get_policy_app, get_policy_apps, user_has_app_access
     from auth_portal.shared_auth import AUTH_BRIDGE_KEY, bridge_signature
 except ModuleNotFoundError:
     from auth_backend import DEFAULT_ADMIN_USERNAME, authenticate_user, get_user_by_id, read_l1_l3_process_hierarchy, read_process_steps
+    from integration_policy import POLICY_VERSION, get_policy_app, get_policy_apps, user_has_app_access
     from shared_auth import AUTH_BRIDGE_KEY, bridge_signature
 
 
@@ -108,34 +110,21 @@ def _require_login(view):
 
 
 def _system_cards() -> list[dict[str, str | bool]]:
-    # Add new integrated applications here so they appear on the master landing page.
-    # `key` must match what `open_internal_app()` expects in `/auth/open/<app_key>`.
-    return [
-        {
-            "key": "maintenance",
-            "name": "Maintenance Management System",
-            "description": "Operational maintenance workspace for incidents, dispatch, resources, and field execution.",
-            "status": "Live",
-            "theme": "g",
-            "has_access": True,
-        },
-        {
-            "key": "finance",
-            "name": "Finance Management System",
-            "description": "Budget, spend, and financial controls portal.",
-            "status": "Restricted",
-            "theme": "b",
-            "has_access": False,
-        },
-        {
-            "key": "registration",
-            "name": "Registration & Records System",
-            "description": "Citizen registration, records, and verification operations.",
-            "status": "Restricted",
-            "theme": "y",
-            "has_access": False,
-        },
-    ]
+    # Cards are driven by policy so rollout state and role access are controlled in one place.
+    current_role = str(session.get("role") or "").strip()
+    cards: list[dict[str, str | bool]] = []
+    for policy_app in get_policy_apps(current_app.config):
+        cards.append(
+            {
+                "key": str(policy_app.get("key") or ""),
+                "name": str(policy_app.get("name") or ""),
+                "description": str(policy_app.get("description") or ""),
+                "status": str(policy_app.get("status") or "Planned"),
+                "theme": str(policy_app.get("theme") or "b"),
+                "has_access": user_has_app_access(policy_app, current_role),
+            }
+        )
+    return cards
 
 
 def _hierarchy_data() -> dict[str, object]:
@@ -231,6 +220,19 @@ def hierarchy_page():
     )
 
 
+@auth_bp.route("/auth/policies")
+@_require_login
+def policies_page():
+    user = get_user_by_id(session.get("user_id"))
+    policy_apps = get_policy_apps(current_app.config)
+    return render_template(
+        "auth/policy_page.html",
+        current_user=user,
+        policy_version=POLICY_VERSION,
+        policy_apps=policy_apps,
+    )
+
+
 @auth_bp.route("/auth/master/hierarchy")
 @_require_login
 def hierarchy_page_legacy_alias():
@@ -240,22 +242,30 @@ def hierarchy_page_legacy_alias():
 @auth_bp.route("/auth/open/<app_key>")
 @_require_login
 def open_internal_app(app_key: str):
-    # Integration switchboard:
-    # - Keep per-app access checks and start/bridge logic here.
-    # - For each new app key, add a branch that validates access and redirects
-    #   to a signed SSO bridge URL (or direct URL if that app does not use bridge auth).
-    normalized = (app_key or "").strip().lower()
-    if normalized != "maintenance":
-        flash("You currently only have access to the Maintenance application.", "warning")
+    policy_app = get_policy_app(app_key, current_app.config)
+    if not policy_app:
+        flash("The selected application is not registered in the integration policy.", "warning")
         return redirect(url_for("auth.master_landing"))
 
-    if not _ensure_maintenance_online():
-        flash("Maintenance application is currently offline (port 5001). Could not auto-start app.py.", "warning")
+    current_role = str(session.get("role") or "").strip()
+    if not user_has_app_access(policy_app, current_role):
+        flash("You do not currently have access to this application.", "warning")
         return redirect(url_for("auth.master_landing"))
+
+    normalized = str(policy_app.get("key") or "").strip().lower()
 
     user_id = str(session.get("user_id") or "").strip()
     role = str(session.get("role") or "").strip()
     if not user_id or not role:
         flash("Session is missing required access information. Please log in again.", "warning")
         return redirect(url_for("auth.login"))
-    return redirect(_maintenance_bridge_url(user_id, role))
+
+    if normalized == "maintenance":
+        if not _ensure_maintenance_online():
+            flash("Maintenance application is currently offline (port 5001). Could not auto-start app.py.", "warning")
+            return redirect(url_for("auth.master_landing"))
+        return redirect(_maintenance_bridge_url(user_id, role))
+
+    app_name = str(policy_app.get("name") or normalized.title())
+    flash(f"{app_name} is policy-registered but not yet activated for runtime handoff.", "info")
+    return redirect(url_for("auth.master_landing"))

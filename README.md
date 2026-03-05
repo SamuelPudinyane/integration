@@ -3,6 +3,7 @@
 This guide covers only the `auth_portal` integration layer and explains how to connect additional internal apps (not just maintenance) to the master login portal.
 
 For a full hierarchy/process map, see [HIERARCHICAL_STRUCTURE.md](HIERARCHICAL_STRUCTURE.md).
+For governance and release controls, see [INTEGRATION_POLICY.md](INTEGRATION_POLICY.md) and [ROLLOUT_PLAN.md](ROLLOUT_PLAN.md).
 
 ---
 
