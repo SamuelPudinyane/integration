@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Login | Ekurhuleni Integrated Water Platform</title>
+  <style>
+    :root{
+      --blue:#051a3a;
+      --yellow:#f9c800;
+      --green:#33a144;
+      --panel:#ffffff;
+      --text:#0b1220;
+      --muted:#55657d;
+      --border: rgba(5,26,58,0.16);
+      --shadow: 0 22px 60px rgba(5,26,58,0.16);
+      --radius: 20px;
+      --font: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+    }
+    *{ box-sizing:border-box; }
+    body{
+      margin:0;
+      min-height:100vh;
+      font-family:var(--font);
+      color:var(--text);
+      background:
+        radial-gradient(1100px 700px at 12% 0%, rgba(5,26,58,0.10), transparent 62%),
+        radial-gradient(900px 600px at 100% 10%, rgba(51,161,68,0.10), transparent 60%),
+        radial-gradient(900px 650px at 60% 120%, rgba(249,200,0,0.12), transparent 62%),
+        #f6f8fc;
+      display:grid;
+      place-items:center;
+      padding:24px;
+    }
+    .card{ width:min(520px,100%); border-radius:var(--radius); border:1px solid var(--border); background:rgba(255,255,255,0.97); box-shadow:var(--shadow); overflow:hidden; }
+    .head{ padding:20px; background:var(--blue); color:#fff; }
+    .title{ margin:0; font-weight:980; }
+    .sub{ margin:6px 0 0; color:rgba(255,255,255,0.85); font-size:13px; }
+    .body{ padding:20px; }
+    label{ display:block; margin-bottom:6px; font-weight:700; }
+    input{ width:100%; padding:11px 12px; border:1px solid var(--border); border-radius:12px; margin-bottom:12px; outline:none; }
+    input:focus{ border-color:var(--blue); box-shadow:0 0 0 3px rgba(5,26,58,0.12); }
+    .btn{ width:100%; border:none; border-radius:12px; padding:11px 12px; background:linear-gradient(135deg, #0c2a5e, #051a3a); color:#fff; font-weight:800; cursor:pointer; }
+    .hint{ margin:12px 0 0; font-size:12px; color:var(--muted); }
+    .hint strong{ color:var(--blue); }
+    .actions{ margin-top:10px; }
+    .actions a{ color:var(--blue); font-size:13px; text-decoration:none; }
+    .flash{ padding:10px 12px; border-radius:10px; margin-bottom:10px; font-size:13px; }
+    .flash.success { background:#E8F5E9; border-left:4px solid #2E7D32; }
+    .flash.danger { background:#FFEBEE; border-left:4px solid #C62828; }
+    .flash.warning { background:#FFF8E1; border-left:4px solid #F9A825; }
+    .flash.info { background:#E1F5FE; border-left:4px solid #0288D1; }
+  </style>
+</head>
+<body>
+  <section class="card">
+    <header class="head">
+      <h1 class="title">Ekurhuleni Integrated Water Platform</h1>
+      <p class="sub">Secure role-based sign in</p>
+    </header>
+    <div class="body">
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          {% for category, message in messages %}
+            <div class="flash {{ category }}">{{ message }}</div>
+          {% endfor %}
+        {% endif %}
+      {% endwith %}
+      <form method="post">
+        <input type="hidden" name="next" value="{{ next_url or '' }}">
+        <label for="username">Username</label>
+        <input id="username" type="text" name="username" required>
+        <label for="password">Password</label>
+        <input id="password" type="password" name="password" required>
+        <button class="btn" type="submit">Log In</button>
+      </form>
+      <p class="hint">Default maintenance admin: <strong>{{ admin_username }}</strong> (use any non-empty password).</p>
+      <div class="actions"><a href="{{ community_report_url }}">Continue as community reporter</a></div>
+    </div>
+  </section>
+</body>
+</html>

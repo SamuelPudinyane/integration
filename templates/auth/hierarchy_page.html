@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Process Hierarchical Structure</title>
+  <style>
+    :root{
+      --blue:#4f8bd6;
+      --orange:#e59a3d;
+      --purple:#b57ce8;
+      --ink:#1f2530;
+      --muted:#6d7686;
+      --bg:#f1f3f6;
+      --line:#8e98a8;
+      --panel:#ffffff;
+    }
+    *{ box-sizing:border-box; }
+    body{ margin:0; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial; background:var(--bg); color:var(--ink); }
+
+    .page{ max-width: 1600px; margin: 0 auto; padding: 18px 18px 30px; }
+    .topbar{ display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:14px; }
+    .title{ margin:0; font-size:22px; font-weight:900; }
+    .sub{ margin:4px 0 0 0; color:var(--muted); font-size:13px; }
+    .btn{ display:inline-flex; align-items:center; justify-content:center; text-decoration:none; border:1px solid #c2cad8; background:#fff; color:#1f2530; padding:8px 12px; border-radius:10px; font-weight:700; }
+
+    .meta{ background:var(--panel); border:1px solid #d9deea; border-radius:12px; padding:12px; margin-bottom:14px; font-size:13px; color:#394153; }
+    .meta strong{ color:#1f2530; }
+
+    .chart-wrap{ overflow:auto; border:1px solid #d9deea; border-radius:14px; background:#f5f6f9; padding:24px; }
+    .chart{ min-width: 1200px; }
+
+    .ceo-row{ display:flex; justify-content:center; margin-bottom:16px; }
+    .connector-main{ width:2px; height:22px; background:var(--line); margin:0 auto; }
+
+    .level1-row{ display:flex; gap:20px; justify-content:flex-start; align-items:flex-start; padding-top:12px; position:relative; }
+    .level1-row::before{ content:""; position:absolute; top:0; left:40px; right:40px; height:2px; background:var(--line); }
+
+    .l1-col{ width:300px; position:relative; }
+    .l1-col::before{ content:""; position:absolute; top:-12px; left:50%; width:2px; height:12px; background:var(--line); transform:translateX(-50%); }
+
+    .node{ background:#fff; border:2px solid; border-radius:8px; box-shadow:0 1px 2px rgba(0,0,0,.05); overflow:hidden; }
+    .node-head{ padding:8px 10px; font-weight:800; font-size:13px; text-align:center; }
+    .node-body{ padding:8px 10px; font-size:12px; color:#4a5568; text-align:center; line-height:1.35; }
+    .node.ceo{ border-color:var(--purple); width:320px; }
+    .node.ceo .node-head{ background:rgba(181,124,232,.22); color:#5e2e86; }
+
+    .node.l1{ border-color:var(--blue); }
+    .node.l1 .node-head{ background:rgba(79,139,214,.25); color:#0b3f7e; }
+
+    .l2-list{ margin-top:22px; display:flex; flex-direction:column; gap:12px; position:relative; }
+    .l2-list::before{ content:""; position:absolute; left:8px; top:0; bottom:0; width:2px; background:var(--line); }
+
+    .l2-item{ position:relative; margin-left:18px; }
+    .l2-item::before{ content:""; position:absolute; left:-10px; top:20px; width:10px; height:2px; background:var(--line); }
+
+    .node.l2{ border-color:var(--orange); }
+    .node.l2 .node-head{ background:rgba(229,154,61,.22); color:#8b4f06; }
+
+    .l3-list{ margin-top:8px; padding-left:10px; display:flex; flex-direction:column; gap:6px; }
+    .l3-chip{ border:1px solid #d8dde8; background:#fff; border-radius:6px; padding:6px 8px; font-size:11px; color:#495261; }
+
+    .steps-panel{ margin-top:14px; background:#fff; border:1px solid #d9deea; border-radius:12px; padding:12px; }
+    .steps-title{ margin:0 0 8px 0; font-size:14px; font-weight:800; }
+    .steps-list{ margin:0; padding-left:18px; font-size:12px; color:#3e4758; }
+
+    @media (max-width: 1200px){
+      .chart{ min-width: 1000px; }
+      .l1-col{ width:260px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="topbar">
+      <div>
+        <h1 class="title">Hierarchical Process Structure</h1>
+        <p class="sub">L1 to L3 Water Utilities process hierarchy rendered as a standalone org-chart view.</p>
+      </div>
+      <a class="btn" href="{{ url_for('auth.master_landing') }}">Back to Master</a>
+    </div>
+
+    <div class="meta">
+      <div><strong>Source Workbook:</strong> {{ hierarchy_data.source_file or 'Not found' }}</div>
+      <div><strong>Counts:</strong> L1={{ hierarchy_data.level_counts.l1 if hierarchy_data else 0 }}, L2={{ hierarchy_data.level_counts.l2 if hierarchy_data else 0 }}, L3={{ hierarchy_data.level_counts.l3 if hierarchy_data else 0 }}, DB Steps={{ hierarchy_data.total_process_steps if hierarchy_data else 0 }}</div>
+      {% if hierarchy_data and hierarchy_data.load_error %}
+        <div><strong>Error:</strong> {{ hierarchy_data.load_error }}</div>
+      {% endif %}
+    </div>
+
+    {% if hierarchy_data and hierarchy_data.roots %}
+      <div class="chart-wrap">
+        <div class="chart">
+          <div class="ceo-row">
+            <div class="node ceo">
+              <div class="node-head">Water Utilities Process Framework</div>
+              <div class="node-body">Top-level process governance view (L1-L3)</div>
+            </div>
+          </div>
+          <div class="connector-main"></div>
+
+          <div class="level1-row">
+            {% for l1 in hierarchy_data.roots %}
+              <div class="l1-col">
+                <div class="node l1">
+                  <div class="node-head">{{ l1.code }}</div>
+                  <div class="node-body">{{ l1.name }}</div>
+                </div>
+
+                <div class="l2-list">
+                  {% for l2 in l1.children %}
+                    <div class="l2-item">
+                      <div class="node l2">
+                        <div class="node-head">{{ l2.code }}</div>
+                        <div class="node-body">{{ l2.name }}</div>
+                      </div>
+                      {% if l2.children %}
+                        <div class="l3-list">
+                          {% for l3 in l2.children %}
+                            <div class="l3-chip">{{ l3.code }} — {{ l3.name }}</div>
+                          {% endfor %}
+                        </div>
+                      {% endif %}
+                    </div>
+                  {% endfor %}
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    {% else %}
+      <div class="meta">No L1-L3 hierarchy data is currently available.</div>
+    {% endif %}
+
+    <div class="steps-panel">
+      <h3 class="steps-title">Database Process Steps</h3>
+      <ul class="steps-list">
+        {% for step in (hierarchy_data.process_steps if hierarchy_data else []) %}
+          <li><strong>{{ step.process_name or 'Unnamed step' }}</strong>{% if step.sequence %} [{{ step.sequence }}]{% endif %} — {{ step.source_table }}</li>
+        {% else %}
+          <li>No process-step rows found in process/workflow/step tables.</li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+</body>
+</html>

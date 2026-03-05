@@ -1,0 +1,967 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Ekurhuleni Integrated Water Platform</title>
+
+  <style>
+    /* ==========================================================
+       EKURHULENI INTEGRATED WATER PLATFORM (Landing only)
+       COMPLETELY NEW module card design (no JS)
+       - “Panel + Icon Rail” cards (different structure/layout)
+       - Floating background shapes + glossy highlight
+       - Light theme, soft palette tints
+       Palette: #051a3a, #f9c800, #33a144, #ce1126, #000000
+       ========================================================== */
+
+    :root{
+      --blue:#051a3a;
+      --yellow:#f9c800;
+      --green:#33a144;
+      --red:#ce1126;
+      --black:#000000;
+
+      --bg:#f6f8fc;
+      --panel:#ffffff;
+      --text:#0b1220;
+      --muted:#55657d;
+
+      --border: rgba(5,26,58,0.16);
+      --border-soft: rgba(0,0,0,0.08);
+
+      --shadow-soft: 0 12px 26px rgba(0,0,0,0.08);
+      --shadow: 0 22px 60px rgba(5,26,58,0.16);
+
+      --radius: 20px;
+      --radius-sm: 14px;
+
+      --font: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+
+      --nav-dark: var(--blue);
+      --nav-dark-text: #fff;
+      --focus-ring: 0 0 0 3px rgba(249,200,0,0.55);
+
+      /* soft tints */
+      --t-blue:  rgba(5,26,58,0.10);
+      --t-yellow:rgba(249,200,0,0.16);
+      --t-green: rgba(51,161,68,0.14);
+      --t-red:   rgba(206,17,38,0.12);
+      --t-black: rgba(0,0,0,0.08);
+    }
+
+    *{ box-sizing:border-box; }
+    html,body{ height:100%; }
+    body{
+      margin:0;
+      font-family:var(--font);
+      color:var(--text);
+      background:
+        radial-gradient(1100px 700px at 12% 0%, rgba(5,26,58,0.10), transparent 62%),
+        radial-gradient(900px 600px at 100% 10%, rgba(51,161,68,0.10), transparent 60%),
+        radial-gradient(900px 650px at 60% 120%, rgba(249,200,0,0.12), transparent 62%),
+        var(--bg);
+    }
+
+    /* ===== Layout ===== */
+    .app-shell{
+      display:grid;
+      grid-template-columns: 295px 1fr;
+      min-height:100vh;
+    }
+
+    /* ===== Sidebar ===== */
+    .sidebar{
+      border-right: 1px solid var(--border);
+      background: linear-gradient(180deg, rgba(5,26,58,0.05), rgba(255,255,255,0.0) 45%), var(--panel);
+      padding: 18px;
+      display:flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    /* ===== Brand ===== */
+    .brand{
+      position: relative;
+      overflow: hidden;
+      display:flex;
+      gap: 12px;
+      align-items: center;
+      padding: 12px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-soft);
+      background: linear-gradient(135deg, rgba(5,26,58,0.07), rgba(51,161,68,0.04));
+      isolation:isolate;
+    }
+    .brand::after{
+      content:"";
+      position:absolute;
+      inset:-40% -30%;
+      background: linear-gradient(120deg, transparent, rgba(249,200,0,0.22), transparent);
+      transform: rotate(12deg);
+      opacity: 0.55;
+      animation: shimmer 9s linear infinite;
+      pointer-events:none;
+      z-index:0;
+    }
+    @keyframes shimmer{
+      0%{ transform: translateX(-26%) rotate(12deg); }
+      100%{ transform: translateX(26%) rotate(12deg); }
+    }
+
+    .logo{
+      width:50px; height:50px;
+      border-radius:14px;
+      display:flex; align-items:center; justify-content:center;
+      overflow:hidden;
+      background:#fff;
+      border:1px solid var(--border);
+      z-index:1;
+      box-shadow: 0 12px 20px rgba(0,0,0,0.08);
+    }
+    .logo img{ width:100%; height:100%; object-fit:contain; padding:6px; }
+    .brand-text{ z-index:1; }
+    .brand-title{ font-weight: 950; letter-spacing: 0.2px; }
+    .brand-sub{ font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+    /* ===== Nav ===== */
+    .nav{ display:flex; flex-direction: column; gap: 8px; }
+    .nav-item{
+      text-decoration:none;
+      color: var(--text);
+      padding: 10px 12px;
+      border-radius: 14px;
+      border: 1px solid transparent;
+      display:flex;
+      align-items:center;
+      justify-content: space-between;
+      gap: 10px;
+      transition: transform 180ms ease, background 180ms ease, border-color 180ms ease, color 180ms ease;
+      outline:none;
+    }
+    .nav-item:hover{
+      background: var(--nav-dark);
+      color: var(--nav-dark-text);
+      border-color: rgba(255,255,255,0.18);
+      transform: translateY(-1px);
+    }
+    .nav-item:focus,
+    .nav-item:focus-visible{
+      background: var(--nav-dark);
+      color: var(--nav-dark-text);
+      box-shadow: var(--focus-ring);
+    }
+    .nav-item.active{
+      background: var(--nav-dark);
+      color: var(--nav-dark-text);
+      border-color: rgba(255,255,255,0.18);
+    }
+    .nav-dot{
+      width: 10px; height: 10px;
+      border-radius: 999px;
+      background: var(--yellow);
+      border: 1px solid rgba(255,255,255,0.55);
+      box-shadow: 0 0 0 6px rgba(249,200,0,0.10);
+    }
+
+    /* ===== Sidebar footer ===== */
+    .sidebar-footer{
+      margin-top: auto;
+      display:flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .mini{
+      padding: 12px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--panel);
+      box-shadow: var(--shadow-soft);
+    }
+    .mini-label{ font-size: 12px; color: var(--muted); font-weight: 950; margin-bottom: 8px; }
+    .mini-hint{ margin-top: 10px; font-size: 12px; color: var(--muted); }
+
+    .pill{
+      display:inline-flex;
+      align-items:center;
+      gap: 8px;
+      padding: 7px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      font-size: 12px;
+      font-weight: 950;
+      background: rgba(255,255,255,0.88);
+    }
+    .pill-ok{
+      border-color: rgba(51,161,68,0.30);
+      background: rgba(51,161,68,0.10);
+      color: var(--black);
+    }
+    .sidebar-actions{ display:flex; gap: 10px; }
+
+    .btn{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      border: 1px solid rgba(5,26,58,0.22);
+      background: linear-gradient(135deg, rgba(5,26,58,0.10), rgba(5,26,58,0.03));
+      color: var(--blue);
+      padding: 10px 12px;
+      border-radius: 14px;
+      cursor: pointer;
+      font-weight: 950;
+      box-shadow: 0 10px 18px rgba(0,0,0,0.06);
+      text-decoration:none;
+      transition: transform 180ms ease, filter 180ms ease;
+      white-space: nowrap;
+    }
+    .btn:hover{ transform: translateY(-1px); filter: brightness(1.03); }
+    .btn:active{ transform: translateY(0); }
+    .btn-ghost{
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,0.95);
+      color: var(--text);
+    }
+
+    /* ===== Main ===== */
+    .main{ display:flex; flex-direction: column; min-width: 0; }
+
+    .topbar{
+      display:flex;
+      align-items:center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 16px 18px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(255,255,255,0.88);
+      backdrop-filter: blur(10px);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    .topbar-left{ display:flex; flex-direction: column; gap: 3px; min-width: 260px; }
+    .page-title{
+      font-weight: 990;
+      letter-spacing: 0.2px;
+      color: var(--blue);
+      font-size: 18px;
+    }
+    .page-sub{ font-size: 12px; color: var(--muted); }
+
+    .topbar-right{
+      display:flex;
+      align-items:center;
+      gap: 12px;
+      flex: 1;
+      justify-content: flex-end;
+    }
+    .search{ display:flex; align-items:center; gap: 10px; flex: 1; max-width: 640px; }
+    .search input{
+      width: 100%;
+      padding: 11px 12px;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      background: var(--panel);
+      outline: none;
+      color: var(--text);
+      box-shadow: 0 10px 18px rgba(0,0,0,0.06);
+    }
+
+    .user-chip{
+      display:flex;
+      align-items:center;
+      gap: 10px;
+      padding: 10px 12px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: var(--panel);
+      box-shadow: 0 10px 18px rgba(0,0,0,0.06);
+      white-space: nowrap;
+      font-weight: 950;
+    }
+    .user-chip .dot{
+      width: 10px; height: 10px;
+      border-radius: 999px;
+      background: var(--green);
+      box-shadow: 0 0 0 6px rgba(51,161,68,0.12);
+    }
+
+    /* ===== Content ===== */
+    .view{
+      padding: 18px;
+      display:flex;
+      flex-direction: column;
+      gap: 16px;
+      animation: fadeIn 260ms ease-out;
+    }
+    @keyframes fadeIn{
+      from{ opacity: 0; transform: translateY(6px); }
+      to{ opacity: 1; transform: translateY(0); }
+    }
+
+    /* ===== Master card ===== */
+    .card{
+      background: rgba(255,255,255,0.96);
+      border: 1px solid var(--border-soft);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-soft);
+      overflow:hidden;
+    }
+    .card-h{
+      padding: 16px 16px 12px;
+      display:flex;
+      justify-content: space-between;
+      align-items:flex-start;
+      gap: 12px;
+    }
+    .card-b{ padding: 16px; }
+
+    .main-card-h{
+      background: var(--blue);
+      color: #fff;
+      border-bottom: 1px solid rgba(255,255,255,0.18);
+      position: relative;
+      overflow:hidden;
+      isolation:isolate;
+    }
+    .main-card-h::after{
+      content:"";
+      position:absolute;
+      inset:-35% -25%;
+      background:
+        radial-gradient(circle at 25% 40%, rgba(249,200,0,0.22), transparent 55%),
+        radial-gradient(circle at 85% 55%, rgba(51,161,68,0.14), transparent 55%),
+        linear-gradient(120deg, transparent, rgba(255,255,255,0.10), transparent);
+      transform: rotate(10deg);
+      opacity: 0.75;
+      animation: heroGlow 10s ease-in-out infinite;
+      z-index:0;
+      pointer-events:none;
+    }
+    @keyframes heroGlow{
+      0%,100%{ transform: translateX(-2%) rotate(10deg); opacity: .70; }
+      50%{ transform: translateX(2%) rotate(10deg); opacity: .85; }
+    }
+    .main-card-h > *{ z-index:1; }
+
+    .main-title{
+      font-weight: 990;
+      letter-spacing: 0.15px;
+      line-height: 1.1;
+      margin:0;
+      color:#fff;
+    }
+    .main-sub{
+      font-size: 12px;
+      margin-top: 6px;
+      line-height: 1.45;
+      color: rgba(255,255,255,0.82);
+    }
+
+    .badge{
+      font-size: 11px;
+      padding: 7px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.22);
+      color: #fff;
+      font-weight: 950;
+      white-space: nowrap;
+      background: rgba(255,255,255,0.14);
+      backdrop-filter: blur(8px);
+    }
+
+    /* ==========================================================
+       TOTALLY NEW CARD SYSTEM (Icon Rail Cards)
+       - left “rail” with stacked mini icons (different from before)
+       - main content on right
+       - background floating blobs
+       - hover: rail pulses + glass highlight sweep
+       ========================================================== */
+
+    .modules{
+      display:grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap: 14px;
+      position: relative;
+    }
+
+    /* subtle background blobs behind the grid */
+    .modules::before{
+      content:"";
+      position:absolute;
+      inset:-20px;
+      background:
+        radial-gradient(280px 180px at 20% 0%, rgba(249,200,0,0.10), transparent 70%),
+        radial-gradient(320px 220px at 75% 40%, rgba(51,161,68,0.10), transparent 70%),
+        radial-gradient(320px 220px at 45% 100%, rgba(5,26,58,0.08), transparent 70%);
+      pointer-events:none;
+      filter: blur(0.2px);
+    }
+
+    .rail-card{
+      grid-column: span 4;
+      position: relative;
+      border-radius: 22px;
+      overflow:hidden;
+      text-decoration:none;
+      color: inherit;
+      outline:none;
+
+      background:
+        linear-gradient(180deg, rgba(255,255,255,0.96), rgba(255,255,255,0.90));
+      border: 1px solid rgba(5,26,58,0.10);
+      box-shadow: 0 14px 30px rgba(0,0,0,0.09);
+
+      display:grid;
+      grid-template-columns: 76px 1fr;
+      min-height: 188px;
+
+      transform: translateY(0);
+      transition: transform 260ms ease, box-shadow 260ms ease, border-color 260ms ease;
+      z-index: 1; /* above grid blobs */
+    }
+
+    /* glossy sweep */
+    .rail-card::after{
+      content:"";
+      position:absolute;
+      inset:-45% -35%;
+      background: linear-gradient(120deg, transparent, rgba(255,255,255,0.55), transparent);
+      transform: rotate(12deg) translateX(-24%);
+      opacity: 0.30;
+      pointer-events:none;
+      transition: opacity 260ms ease;
+      animation: sweep 14s linear infinite;
+    }
+    @keyframes sweep{
+      0%{ transform: rotate(12deg) translateX(-30%); }
+      100%{ transform: rotate(12deg) translateX(30%); }
+    }
+
+    /* left rail */
+    .rail{
+      position: relative;
+      padding: 14px 10px;
+      display:flex;
+      flex-direction: column;
+      align-items:center;
+      justify-content: space-between;
+      gap: 10px;
+
+      background:
+        linear-gradient(180deg, rgba(255,255,255,0.40), rgba(255,255,255,0.10)),
+        radial-gradient(160px 240px at 50% 0%, var(--tint, rgba(5,26,58,0.08)), transparent 70%);
+      border-right: 1px solid rgba(5,26,58,0.08);
+    }
+
+    /* rail accent spine */
+    .rail::before{
+      content:"";
+      position:absolute;
+      top: 14px;
+      bottom: 14px;
+      left: 50%;
+      width: 8px;
+      transform: translateX(-50%);
+      border-radius: 999px;
+      background: linear-gradient(180deg, var(--accent, var(--yellow)), rgba(255,255,255,0.0));
+      opacity: .85;
+      filter: saturate(1.1);
+    }
+
+    /* main icon (aligned to logo rounded square) */
+    .rail-main{
+      width: 48px;
+      height: 48px;
+      border-radius: 14px;
+      display:grid;
+      place-items:center;
+      background: rgba(255,255,255,0.88);
+      border: 1px solid rgba(5,26,58,0.12);
+      box-shadow: 0 12px 18px rgba(0,0,0,0.10);
+      z-index: 1;
+      color: var(--blue);
+      font-size: 20px;
+    }
+
+    /* mini icons stack */
+    .rail-mini{
+      display:flex;
+      flex-direction: column;
+      gap: 10px;
+      z-index: 1;
+    }
+    .mini-dot{
+      width: 14px; height: 14px;
+      border-radius: 999px;
+      border: 1px solid rgba(0,0,0,0.10);
+      background: rgba(255,255,255,0.75);
+      box-shadow: 0 8px 14px rgba(0,0,0,0.08);
+      position: relative;
+      overflow:hidden;
+    }
+    .mini-dot::after{
+      content:"";
+      position:absolute;
+      inset:3px;
+      border-radius:999px;
+      background: var(--accent, var(--yellow));
+      opacity: 0.85;
+    }
+
+    /* right content area */
+    .rail-content{
+      padding: 16px 16px 14px;
+      display:flex;
+      flex-direction: column;
+      gap: 10px;
+      position: relative;
+      background:
+        radial-gradient(520px 220px at 20% 0%, rgba(255,255,255,0.70), transparent 60%),
+        radial-gradient(520px 240px at 90% 60%, var(--tint, rgba(5,26,58,0.08)), transparent 65%),
+        transparent;
+    }
+
+    .rail-top{
+      display:flex;
+      align-items:flex-start;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .tag{
+      font-size: 11px;
+      font-weight: 950;
+      padding: 7px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(5,26,58,0.12);
+      background: rgba(255,255,255,0.78);
+      color: var(--blue);
+      box-shadow: 0 10px 16px rgba(0,0,0,0.06);
+      backdrop-filter: blur(8px);
+      white-space: nowrap;
+    }
+
+    .rail-title{
+      margin:0;
+      font-size: 16px;
+      line-height: 1.1;
+      letter-spacing: 0.15px;
+      font-weight: 990;
+      color: var(--blue);
+    }
+
+    .rail-desc{
+      margin:0;
+      font-size: 12px;
+      line-height: 1.45;
+      color: rgba(11,18,32,0.70);
+      max-width: 46ch;
+    }
+
+    .rail-actions{
+      margin-top: auto;
+      display:flex;
+      align-items:center;
+      justify-content: space-between;
+      gap: 10px;
+      padding-top: 8px;
+    }
+
+    .pill-chip{
+      display:inline-flex;
+      align-items:center;
+      gap: 8px;
+      padding: 8px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(5,26,58,0.12);
+      background: #F5B418;
+      font-size: 12px;
+      font-weight: 950;
+      color: #1b2a44;
+      box-shadow: 0 10px 16px rgba(0,0,0,0.06);
+      backdrop-filter: blur(8px);
+    }
+
+    .arrow{
+      width: 38px; height: 38px;
+      border-radius: 14px;
+      display:grid;
+      place-items:center;
+      background: rgba(5,26,58,0.05);
+      border: 1px solid rgba(5,26,58,0.10);
+      color: var(--blue);
+      box-shadow: 0 10px 16px rgba(0,0,0,0.06);
+      transition: transform 220ms ease, background 220ms ease, border-color 220ms ease;
+    }
+
+    /* Hover / focus */
+    .rail-card:hover{
+      transform: translateY(-6px);
+      box-shadow: var(--shadow);
+      border-color: rgba(5,26,58,0.22);
+    }
+    .rail-card:hover::after{ opacity: 0.44; }
+    .rail-card:hover .arrow{
+      transform: translateX(2px) rotate(-4deg);
+      background: rgba(5,26,58,0.08);
+      border-color: rgba(5,26,58,0.16);
+    }
+    .rail-card:focus,
+    .rail-card:focus-visible{
+      box-shadow: var(--focus-ring), var(--shadow);
+      transform: translateY(-5px);
+    }
+
+    /* subtle rail pulse */
+    .rail-card:hover .rail::before{
+      animation: pulse 1.4s ease-in-out infinite;
+    }
+    @keyframes pulse{
+      0%,100%{ opacity: .78; filter: saturate(1.0); }
+      50%{ opacity: 1; filter: saturate(1.25); }
+    }
+
+    /* variants */
+    .y{ --tint: var(--t-yellow); --accent: var(--yellow); }
+    .g{ --tint: var(--t-green);  --accent: var(--green); }
+    .r{ --tint: var(--t-red);    --accent: var(--red); }
+    .b{ --tint: var(--t-blue);   --accent: #0e357f; }
+    .k{ --tint: var(--t-black);  --accent: var(--black); }
+
+    /* Footer */
+    .footer{
+      margin-top: auto;
+      padding: 14px 18px;
+      border-top: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 12px;
+      background: rgba(255,255,255,0.75);
+    }
+
+    .flash{
+      padding: 10px 12px;
+      border-radius: 10px;
+      margin-bottom: 10px;
+      font-size: 13px;
+      border: 1px solid transparent;
+    }
+    .flash.success { background:#E8F5E9; border-color:#2E7D32; }
+    .flash.danger { background:#FFEBEE; border-color:#C62828; }
+    .flash.warning { background:#FFF8E1; border-color:#F9A825; }
+    .flash.info { background:#E1F5FE; border-color:#0288D1; }
+
+    .hierarchy-wrap{
+      margin-top: 16px;
+      display:flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .hierarchy-card{
+      background: rgba(255,255,255,0.96);
+      border: 1px solid var(--border-soft);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-soft);
+      overflow:hidden;
+    }
+    .hierarchy-head{
+      padding: 14px 16px;
+      background: var(--blue);
+      color:#fff;
+      font-weight: 900;
+      border-bottom: 1px solid rgba(255,255,255,0.2);
+    }
+    .hierarchy-body{
+      padding: 14px 16px;
+      display:grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+    }
+    .hierarchy-level{
+      border:1px solid var(--border);
+      border-radius: 12px;
+      background:#fff;
+      padding: 12px;
+    }
+    .hierarchy-level h4{
+      margin:0 0 8px 0;
+      color: var(--blue);
+      font-size: 14px;
+    }
+    .hierarchy-level ul,
+    .hierarchy-list{
+      margin:0;
+      padding-left: 18px;
+      color: var(--text);
+      font-size: 13px;
+      line-height: 1.45;
+    }
+    .hierarchy-grid{
+      display:grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 12px;
+    }
+
+    /* Reduce motion */
+    @media (prefers-reduced-motion: reduce){
+      *{ animation: none !important; transition: none !important; }
+    }
+
+    /* Responsive */
+    @media (max-width: 1100px){
+      .rail-card{ grid-column: span 6; }
+    }
+    @media (max-width: 980px){
+      .app-shell{ grid-template-columns: 1fr; }
+      .sidebar{ position: sticky; top: 0; z-index: 20; }
+      .topbar{ flex-direction: column; align-items: stretch; }
+      .topbar-right{ flex-direction: column; align-items: stretch; }
+      .rail-card{ grid-column: span 12; }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="app-shell">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="logo">
+          <img src="{{ url_for('static', filename='branding/city-logo.png') }}" alt="Ekurhuleni Municipality Logo">
+        </div>
+        <div class="brand-text">
+          <div class="brand-title">Ekurhuleni</div>
+          <div class="brand-sub">Integrated Water Platform</div>
+        </div>
+      </div>
+
+      <nav class="nav">
+        <a class="nav-item active" href="#home"><span>Home</span><span class="nav-dot"></span></a>
+        <a class="nav-item" href="/auth/hierarchy"><span>Hierarchical Structure</span><span class="nav-dot"></span></a>
+        <a class="nav-item" href="#mobility"><span>Mobility</span><span class="nav-dot"></span></a>
+        <a class="nav-item" href="{{ url_for('auth.open_internal_app', app_key='maintenance') }}"><span>Maintenance</span><span class="nav-dot"></span></a>
+        <a class="nav-item" href="#bi"><span>Business Intelligence</span><span class="nav-dot"></span></a>
+        <a class="nav-item" href="#optimisation"><span>Process Optimisation</span><span class="nav-dot"></span></a>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="mini">
+          <div class="mini-label">Status</div>
+          <div class="pill pill-ok">Online (Logout)</div>
+          <div class="mini-hint">Ekurhuleni Municipality</div>
+        </div>
+
+        <div class="sidebar-actions">
+          <a class="btn" href="#home">Quick Start</a>
+          <a class="btn btn-ghost" href="#optimisation">Optimisation</a>
+        </div>
+      </div>
+    </aside>
+
+    <!-- MAIN -->
+    <main class="main">
+      <header class="topbar">
+        <div class="topbar-left">
+          <div class="page-title"></div>
+          <div class="page-sub"></div>
+        </div>
+      </header>
+
+      <section class="view">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for category, message in messages %}
+              <div class="flash {{ category }}">{{ message }}</div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+
+        <section id="home">
+          <div class="card">
+            <div class="card-h main-card-h">
+              <div>
+                <h2 class="main-title">Integrated Water Platform</h2>
+                <div class="main-sub">A single entry point for water operations, field teams, and decision-making.</div>
+              </div>
+              <span class="badge">Ekurhuleni</span>
+            </div>
+
+            <div class="card-b">
+              <div class="modules">
+
+                <!-- CARD 1 (Structure) -->
+                <a class="rail-card y" href="/auth/hierarchy" aria-label="Open Hierarchical Structure module">
+                  <div class="rail">
+                    <div class="rail-main" aria-hidden="true">🏛️</div>
+                    <div class="rail-mini" aria-hidden="true">
+                      <span class="mini-dot"></span>
+                      <span class="mini-dot"></span>
+                      <span class="mini-dot"></span>
+                    </div>
+                  </div>
+
+                  <div class="rail-content">
+                    <div class="rail-top">
+                      <h3 class="rail-title">Hierarchical Structure</h3>
+                      <span class="tag">Structure</span>
+                    </div>
+                    <p class="rail-desc">Define roles, reporting lines, escalation routes, and accountability across teams.</p>
+
+                    <div class="rail-actions">
+                      <span class="pill-chip">Open Dashboard</span>
+                      <span class="arrow" aria-hidden="true">➜</span>
+                    </div>
+                  </div>
+                </a>
+
+                <!-- CARD 2 (Mobility) -->
+                <a class="rail-card g" href="#mobility" aria-label="Open Mobility module">
+                  <div class="rail">
+                    <div class="rail-main" aria-hidden="true">📍</div>
+                    <div class="rail-mini" aria-hidden="true">
+                      <span class="mini-dot"></span>
+                      <span class="mini-dot"></span>
+                      <span class="mini-dot"></span>
+                    </div>
+                  </div>
+
+                  <div class="rail-content">
+                    <div class="rail-top">
+                      <h3 class="rail-title">Mobility</h3>
+                      <span class="tag">Field</span>
+                    </div>
+                    <p class="rail-desc">Mobile workflows for inspections, geo-tagging, and checklist compliance.</p>
+
+                    <div class="rail-actions">
+                      <span class="pill-chip">Open Dashboard</span>
+                      <span class="arrow" aria-hidden="true">➜</span>
+                    </div>
+                  </div>
+                </a>
+
+                <!-- CARD 3 (Maintenance) -->
+                <a class="rail-card r" href="{{ url_for('auth.open_internal_app', app_key='maintenance') }}" aria-label="Open Maintenance module">
+                  <div class="rail">
+                    <div class="rail-main" aria-hidden="true">🛠️</div>
+                    <div class="rail-mini" aria-hidden="true">
+                      <span class="mini-dot"></span>
+                      <span class="mini-dot"></span>
+                      <span class="mini-dot"></span>
+                    </div>
+                  </div>
+
+                  <div class="rail-content">
+                    <div class="rail-top">
+                      <h3 class="rail-title">Maintenance</h3>
+                      <span class="tag">Work</span>
+                    </div>
+                    <p class="rail-desc">Work orders, asset history, scheduling, SLA tracking, and close-out evidence.</p>
+
+                    <div class="rail-actions">
+                      <span class="pill-chip">Open Dashboard</span>
+                      <span class="arrow" aria-hidden="true">➜</span>
+                    </div>
+                  </div>
+                </a>
+
+                <!-- CARD 4 (BI) -->
+                <a class="rail-card b" href="#bi" aria-label="Open Business Intelligence module">
+                  <div class="rail">
+                    <div class="rail-main" aria-hidden="true">📊</div>
+                    <div class="rail-mini" aria-hidden="true">
+                      <span class="mini-dot"></span>
+                      <span class="mini-dot"></span>
+                      <span class="mini-dot"></span>
+                    </div>
+                  </div>
+
+                  <div class="rail-content">
+                    <div class="rail-top">
+                      <h3 class="rail-title">Business Intelligence</h3>
+                      <span class="tag">BI</span>
+                    </div>
+                    <p class="rail-desc">KPIs, dashboards, and reporting for performance, risk, and trend analysis.</p>
+
+                    <div class="rail-actions">
+                      <span class="pill-chip">Open Dashboard</span>
+                      <span class="arrow" aria-hidden="true">➜</span>
+                    </div>
+                  </div>
+                </a>
+
+                <!-- CARD 5 (Optimisation) -->
+                <a class="rail-card k" href="#optimisation" aria-label="Open Process Optimisation module">
+                  <div class="rail">
+                    <div class="rail-main" aria-hidden="true">⚙️</div>
+                    <div class="rail-mini" aria-hidden="true">
+                      <span class="mini-dot"></span>
+                      <span class="mini-dot"></span>
+                      <span class="mini-dot"></span>
+                    </div>
+                  </div>
+
+                  <div class="rail-content">
+                    <div class="rail-top">
+                      <h3 class="rail-title">Process Optimisation</h3>
+                      <span class="tag">Optimise</span>
+                    </div>
+                    <p class="rail-desc">Identify bottlenecks, recommend actions, and track measurable impact.</p>
+
+                    <div class="rail-actions">
+                      <span class="pill-chip">Open Dashboard</span>
+                      <span class="arrow" aria-hidden="true">➜</span>
+                    </div>
+                  </div>
+                </a>
+
+                <!-- CARD 5 (Optimisation) -->
+                <a class="rail-card k" href="#optimisation" aria-label="Open Process Optimisation module">
+                  <div class="rail">
+                    <div class="rail-main" aria-hidden="true">⚙️</div>
+                    <div class="rail-mini" aria-hidden="true">
+                      <span class="mini-dot"></span>
+                      <span class="mini-dot"></span>
+                      <span class="mini-dot"></span>
+                    </div>
+                  </div>
+
+                  <div class="rail-content">
+                    <div class="rail-top">
+                      <h3 class="rail-title">Settings</h3>
+                      <span class="tag">Customize</span>
+                    </div>
+                    <p class="rail-desc">Identify bottlenecks, recommend actions, and track measurable impact.</p>
+
+                    <div class="rail-actions">
+                      <span class="pill-chip">Open Dashboard</span>
+                      <span class="arrow" aria-hidden="true">➜</span>
+                    </div>
+                  </div>
+                </a>
+
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- anchors -->
+        <section id="mobility" aria-hidden="true"></section>
+        <section id="maintenance" aria-hidden="true"></section>
+        <section id="bi" aria-hidden="true"></section>
+        <section id="optimisation" aria-hidden="true"></section>
+      </section>
+
+      <footer class="footer">
+        <span></span>
+      </footer>
+    </main>
+  </div>
+</body>
+<script>
+  if (window.location.hash === '#hierarchy') {
+    window.location.replace("/auth/hierarchy");
+  }
+</script>
+</html>
